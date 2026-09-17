@@ -1,0 +1,77 @@
+server:
+  port: ${SSO_PORT:8090}
+  servlet:
+    context-path: /sso
+    session:
+      timeout: ${SSO_SESSION_TIMEOUT:8h}
+      cookie:
+        name: SSOSESSIONID
+        http-only: true
+        same-site: lax
+        path: /sso
+  forward-headers-strategy: framework
+
+spring:
+  application:
+    name: sso
+  datasource:
+    # По умолчанию своя H2 — не трогаем БД портала.
+    # TODO: синхронизация пользователей с webapp или общий IdP.
+    url: ${SSO_DB_URL:jdbc:h2:mem:sso;DB_CLOSE_DELAY=-1;MODE=PostgreSQL}
+    username: ${SSO_DB_USER:sa}
+    password: ${SSO_DB_PASS:}
+    driver-class-name: ${SSO_DB_DRIVER:org.h2.Driver}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  h2:
+    console:
+      enabled: false
+  thymeleaf:
+    cache: false
+
+# Секрет HMAC для JWT, который доверяют webapp и excel.
+# В проде задай через SSO_JWT_SECRET (длинная случайная строка).
+sso:
+  jwt:
+    secret: ${SSO_JWT_SECRET:change-me-sso-jwt-local-only-min-32-chars!!}
+    # Короткий handoff-токен после обмена code → token
+    access-token-ttl: ${SSO_ACCESS_TTL:5m}
+    issuer: ${SSO_ISSUER:http://127.0.0.1:8090/sso}
+  session:
+    # Сколько живёт сессия на самом SSO (cookie SSOSESSIONID)
+    timeout: ${SSO_SESSION_TIMEOUT:8h}
+  code:
+    ttl: ${SSO_CODE_TTL:120s}
+  clients:
+    webapp:
+      client-id: webapp
+      client-secret: ${SSO_CLIENT_WEBAPP_SECRET:webapp-secret-local}
+      redirect-uris:
+        - http://127.0.0.1:8080/login/sso/callback
+        - http://127.0.0.1:8088/login/sso/callback
+    excel:
+      client-id: excel
+      client-secret: ${SSO_CLIENT_EXCEL_SECRET:excel-secret-local}
+      redirect-uris:
+        - http://127.0.0.1:8081/excel/login/sso/callback
+        - http://127.0.0.1:8088/excel/login/sso/callback
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+
+logging:
+  level:
+    root: INFO
+    com.example.sso: INFO

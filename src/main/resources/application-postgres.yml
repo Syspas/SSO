@@ -1,0 +1,14 @@
+# Профиль postgres: SPRING_PROFILES_ACTIVE=postgres
+# Своя БД SSO, не схема портала.
+spring:
+  datasource:
+    url: ${SSO_DB_URL:jdbc:postgresql://127.0.0.1:5432/sso}
+    username: ${SSO_DB_USER:sso}
+    password: ${SSO_DB_PASS:sso}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: ${SSO_DDL_AUTO:update}
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
