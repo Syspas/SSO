@@ -36,6 +36,7 @@ public class AuthorizationService {
         if (state != null && !state.isBlank()) {
             builder.queryParam("state", state);
         }
-        return builder.build(true).toUriString();
+        // encode: state с кавычками/HTML не должен валить authorize 500
+        return builder.build().encode().toUriString();
     }
 }

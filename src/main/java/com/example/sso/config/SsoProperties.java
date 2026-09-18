@@ -19,6 +19,11 @@ public class SsoProperties {
     private final Jwt jwt = new Jwt();
     private final Session session = new Session();
     private final Code code = new Code();
+    /**
+     * Куда вести после формы логина, если нет сохранённого {@code /authorize}
+     * (прямой заход на /login?logout). Портал сам начнёт OAuth.
+     */
+    private String postLoginRedirect = "http://127.0.0.1:8088/dashboard";
     private Map<String, Client> clients = new LinkedHashMap<>();
 
     public Jwt getJwt() {
@@ -31,6 +36,14 @@ public class SsoProperties {
 
     public Code getCode() {
         return code;
+    }
+
+    public String getPostLoginRedirect() {
+        return postLoginRedirect;
+    }
+
+    public void setPostLoginRedirect(String postLoginRedirect) {
+        this.postLoginRedirect = postLoginRedirect;
     }
 
     public Map<String, Client> getClients() {

@@ -38,6 +38,7 @@ spring:
 # Секрет HMAC для JWT, который доверяют webapp и excel.
 # В проде задай через SSO_JWT_SECRET (длинная случайная строка).
 sso:
+  post-login-redirect: ${SSO_POST_LOGIN_REDIRECT:http://127.0.0.1:8088/dashboard}
   jwt:
     secret: ${SSO_JWT_SECRET:change-me-sso-jwt-local-only-min-32-chars!!}
     # Короткий handoff-токен после обмена code → token

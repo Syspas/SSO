@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<html lang="ru" xmlns:th="http://www.thymeleaf.org" id="sso-login-html" data-testid="sso-login-html">
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
@@ -57,15 +57,24 @@
     </style>
 </head>
 <body>
-<form th:action="@{/login}" method="post">
-    <h1>SSO вход</h1>
-    <div class="err" th:if="${param.error}">Неверный email или пароль</div>
-    <div class="ok" th:if="${param.logout}">Вы вышли из SSO</div>
-    <label for="username">Email</label>
-    <input id="username" name="username" type="email" autocomplete="username" required autofocus/>
-    <label for="password">Пароль</label>
-    <input id="password" name="password" type="password" autocomplete="current-password" required/>
-    <button type="submit">Войти</button>
+<main id="sso-login-page" data-testid="sso-login-page">
+<form id="sso-login-form" th:action="@{/login}" method="post" data-testid="sso-login__form">
+    <input id="sso-login-csrf" type="hidden"
+           th:name="${_csrf.parameterName}" th:value="${_csrf.token}"
+           data-testid="sso-login__csrf"/>
+    <h1 id="sso-login-title" data-testid="sso-login__title">SSO вход</h1>
+    <div id="sso-login-error" class="err" th:if="${param.error}"
+         data-testid="sso-login__error">Неверный email или пароль</div>
+    <div id="sso-login-logout-ok" class="ok" th:if="${param.logout}"
+         data-testid="sso-login__logout-ok">Вы вышли из SSO</div>
+    <label id="sso-login-email-label" for="username" data-testid="sso-login__email-label">Email</label>
+    <input id="username" name="username" type="email" autocomplete="username" required autofocus
+           data-testid="sso-login__email"/>
+    <label id="sso-login-password-label" for="password" data-testid="sso-login__password-label">Пароль</label>
+    <input id="password" name="password" type="password" autocomplete="current-password" required
+           data-testid="sso-login__password"/>
+    <button id="sso-login-submit" type="submit" data-testid="sso-login__submit">Войти</button>
 </form>
+</main>
 </body>
 </html>

@@ -109,6 +109,25 @@ Excel также принимает `Authorization: Bearer` (когда шлюз
 | `SPRING_PROFILES_ACTIVE=postgres` | своя Postgres вместо H2 |
 | `SSO_DB_URL` / `SSO_DB_USER` / `SSO_DB_PASS` | JDBC SSO (не БД портала) |
 
+## Тесты и CI
+
+Те же двери, что у webapp: флаги Maven живут в `scripts/`, не в `Jenkinsfile`.
+Локально и в Jenkins зовутся одни скрипты. Между слоями не делай `mvn clean` — сотрёшь Allure.
+
+| Слой | Команда | Что проверяет |
+|------|---------|---------------|
+| Юнит | `./scripts/test-unit.sh` | MockMvc, JWT, сиды, клиенты. Без HtmlUnit и ArchUnit |
+| Безопасность | `./scripts/test-security.sh` | `@Tag("security")`: чужой redirect, reuse code, битый JWT |
+| UI | `./scripts/test-ui.sh` | HtmlUnit, форма логина, authorize после сессии |
+| Архитектура | `./scripts/test-architecture.sh` | ArchUnit слоёв и запрет опасных API |
+| Все слои | `./scripts/test-all.sh` | Четыре слоя подряд |
+| Смоук | `./scripts/test-smoke-boot.sh` | Поднимает `target/sso.jar`, curl health/login |
+| Пакет | `./scripts/package-dist.sh` | zip `target/sso-*.zip` (`-Pdist`, тесты уже прошли) |
+
+Отчёт: `./mvnw allure:serve`.
+
+Jenkins (тот же контейнер, что webapp, вкладка **sso**): `sso-build`, `sso-build-package`, однослойные задачи и `sso-smoke`. После правки `createSsoJobs.groovy` нужен restart Jenkins.
+
 ## Структура пакетов
 
 ```text

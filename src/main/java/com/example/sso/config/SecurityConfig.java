@@ -3,7 +3,6 @@ package com.example.sso.config;
 import com.example.sso.client.ClientRegistry;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -32,13 +31,15 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
-            ClientRegistry clientRegistry) throws Exception {
+            ClientRegistry clientRegistry,
+            SsoProperties ssoProperties) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/css/**", "/login", "/error").permitAll()
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/token").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/userinfo").permitAll()
+                        // Все методы /token и /userinfo без cookie: MVC вернёт 405 на PUT/DELETE,
+                        // иначе Security уводит на /login (302) и API-пентест путается.
+                        .requestMatchers("/token", "/userinfo").permitAll()
                         .requestMatchers("/authorize").authenticated()
                         .anyRequest().authenticated())
                 .formLogin(form -> form
@@ -46,6 +47,7 @@ public class SecurityConfig {
                         .loginProcessingUrl("/login")
                         .usernameParameter("username")
                         .passwordParameter("password")
+                        .successHandler(new LoginSuccessHandler(ssoProperties.getPostLoginRedirect()))
                         .permitAll())
                 .logout(logout -> logout
                         .logoutRequestMatcher(new OrRequestMatcher(

@@ -1,0 +1,17 @@
+[
+  {
+    "name": "Упал шаг теста",
+    "matchedStatuses": ["failed"],
+    "messageRegex": ".*Шаг «.*"
+  },
+  {
+    "name": "Ошибка внутри шага",
+    "matchedStatuses": ["broken"],
+    "messageRegex": ".*Шаг «.*завершился ошибкой.*"
+  },
+  {
+    "name": "Нарушение архитектуры",
+    "matchedStatuses": ["failed"],
+    "messageRegex": ".*Architecture Violation.*"
+  }
+]
