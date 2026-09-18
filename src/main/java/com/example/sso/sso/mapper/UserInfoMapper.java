@@ -11,7 +11,7 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface UserInfoMapper {
 
-    @Mapping(target = "name", source = "displayName")
+    @Mapping(target = "name", expression = "java(user.displayName())")
     @Mapping(target = "roles", source = "roles")
     UserInfoResponse toResponse(SsoUser user);
 

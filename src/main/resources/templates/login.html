@@ -58,8 +58,7 @@
 </head>
 <body>
 <form th:action="@{/login}" method="post">
-    <h1>SSO</h1>
-    <p>Единый вход для портала и Excel</p>
+    <h1>SSO вход</h1>
     <div class="err" th:if="${param.error}">Неверный email или пароль</div>
     <div class="ok" th:if="${param.logout}">Вы вышли из SSO</div>
     <label for="username">Email</label>

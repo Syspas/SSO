@@ -24,10 +24,20 @@ cd /home/master/IdeaProjects/sso
 
 Открой: http://127.0.0.1:8090/sso/login
 
-Демо-пользователи (пароль `admin`):
+Демо-пользователи (пароль тот же, что сиды портала: `PortalSeed9!Change`):
 
-- `admin@local` — ROLE_ADMIN, ROLE_USER
-- `user@local` — ROLE_USER
+| Email | ФИО |
+|-------|-----|
+| `admin@mail.ru` | Иванов Иван Иванович |
+| `mod@mail.ru` | Петров Пётр |
+| `user@mail.ru` | Сидоров Сидор Сидорович |
+| `admin@local` | Локальный Админ |
+| `user@local` | Локальный Пользователь |
+
+Роли в JWT для портала **не** используются: доступ в webapp берётся из таблицы `users`.
+При `PORTAL_SSO_ENABLED=true` портал принимает вход **только** через SSO.
+Стык: **email + ФИО** из `/userinfo` должны совпасть с учёткой портала.
+Смена пароля в админке портала **не** меняет пароль на `/sso/login` (две БД).
 
 ## Протокол v1 (упрощённый OAuth)
 
@@ -67,17 +77,17 @@ JWT: HMAC-SHA, claims `sub`=email, `name`, `roles`, TTL **5 минут** (handof
 
 Риск «общей БД»: общий schema + пароли портала удобны, но SSO и портал начинают делить миграции и инциденты. Пока раздельно.
 
-## Как подключить webapp (двойной режим)
+## Как подключить webapp (SSO-only)
 
 1. Подними SSO на `:8090`.
 2. Задай одинаковые секреты: `SSO_JWT_SECRET` = `PORTAL_SSO_JWT_SECRET`,
    `SSO_CLIENT_WEBAPP_SECRET` = `PORTAL_SSO_CLIENT_SECRET`.
 3. `PORTAL_SSO_ENABLED=true`.
-4. На `/login` появится «Войти через SSO» → `/login/sso` → callback создаёт сессию портала.
+4. На `/login` остаётся только «Войти через SSO» (локальная форма скрыта,
+   `POST /login` не открывает сессию).
+5. Callback сверяет email **и** ФИО с таблицей `users` портала.
 
-Без флага локальный form-login как раньше.
-
-Email в JWT должен совпасть с учёткой в БД портала.
+Без флага — обычный локальный form-login портала.
 
 ## Как подключить excel
 

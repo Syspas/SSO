@@ -33,14 +33,15 @@ class JwtServiceTest {
     void issuesClaims() {
         SsoUser user = new SsoUser();
         user.setEmail("admin@local");
-        user.setDisplayName("Admin");
+        user.setLastName("Локальный");
+        user.setFirstName("Админ");
         user.setRoles("ROLE_ADMIN,ROLE_USER");
 
         String token = jwtService.issueAccessToken(user);
         Claims claims = jwtService.parseAndValidate(token);
 
         assertThat(claims.getSubject()).isEqualTo("admin@local");
-        assertThat(claims.get("name", String.class)).isEqualTo("Admin");
+        assertThat(claims.get("name", String.class)).isEqualTo("Локальный Админ");
         assertThat(claims.get("roles", List.class)).contains("ROLE_ADMIN", "ROLE_USER");
         assertThat(claims.getIssuer()).isEqualTo("http://127.0.0.1:8090/sso");
     }

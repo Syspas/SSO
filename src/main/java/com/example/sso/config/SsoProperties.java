@@ -103,6 +103,7 @@ public class SsoProperties {
         private String clientId;
         private String clientSecret;
         private List<String> redirectUris = new ArrayList<>();
+        private List<String> postLogoutRedirectUris = new ArrayList<>();
 
         public String getClientId() {
             return clientId;
@@ -126,6 +127,16 @@ public class SsoProperties {
 
         public void setRedirectUris(List<String> redirectUris) {
             this.redirectUris = redirectUris != null ? redirectUris : new ArrayList<>();
+        }
+
+        public List<String> getPostLogoutRedirectUris() {
+            return postLogoutRedirectUris;
+        }
+
+        public void setPostLogoutRedirectUris(List<String> postLogoutRedirectUris) {
+            this.postLogoutRedirectUris = postLogoutRedirectUris != null
+                    ? postLogoutRedirectUris
+                    : new ArrayList<>();
         }
     }
 }

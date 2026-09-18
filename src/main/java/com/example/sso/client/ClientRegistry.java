@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -43,6 +44,20 @@ public class ClientRegistry {
         if (!allowed) {
             throw new SsoBadRequestException("redirect_uri is not registered for client");
         }
+    }
+
+    /**
+     * RP-initiated logout: {@code post_logout_redirect_uri} только из конфига клиента.
+     */
+    public boolean isAllowedPostLogoutRedirect(String clientId, String postLogoutRedirectUri) {
+        if (postLogoutRedirectUri == null || postLogoutRedirectUri.isBlank()) {
+            return false;
+        }
+        return findByClientId(clientId)
+                .map(SsoProperties.Client::getPostLogoutRedirectUris)
+                .orElse(List.of())
+                .stream()
+                .anyMatch(postLogoutRedirectUri::equals);
     }
 
     public void validateSecret(SsoProperties.Client client, String clientSecret) {

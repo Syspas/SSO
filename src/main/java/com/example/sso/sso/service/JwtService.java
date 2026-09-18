@@ -50,7 +50,7 @@ public class JwtService {
         return Jwts.builder()
                 .issuer(properties.getJwt().getIssuer())
                 .subject(user.getEmail())
-                .claim(CLAIM_NAME, user.getDisplayName())
+                .claim(CLAIM_NAME, user.displayName())
                 .claim(CLAIM_ROLES, roles)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(exp))

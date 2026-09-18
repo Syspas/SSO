@@ -10,6 +10,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.nio.charset.StandardCharsets;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -59,7 +61,8 @@ class SsoFlowIntegrationTest {
                 .andExpect(status().isOk())
                 .andReturn();
 
-        JsonNode tokenJson = objectMapper.readTree(tokenResult.getResponse().getContentAsString());
+        JsonNode tokenJson = objectMapper.readTree(
+                tokenResult.getResponse().getContentAsString(StandardCharsets.UTF_8));
         String accessToken = tokenJson.get("access_token").asText();
         assertThat(accessToken).isNotBlank();
 
@@ -68,9 +71,55 @@ class SsoFlowIntegrationTest {
                 .andExpect(status().isOk())
                 .andReturn();
 
-        JsonNode info = objectMapper.readTree(userinfo.getResponse().getContentAsString());
+        JsonNode info = objectMapper.readTree(
+                userinfo.getResponse().getContentAsString(StandardCharsets.UTF_8));
         assertThat(info.get("email").asText()).isEqualTo("admin@local");
+        assertThat(info.get("lastName").asText()).isEqualTo("Локальный");
+        assertThat(info.get("firstName").asText()).isEqualTo("Админ");
+        assertThat(info.path("middleName").isNull() || info.path("middleName").asText("").isEmpty())
+                .isTrue();
         assertThat(info.get("roles").toString()).contains("ROLE_ADMIN");
+    }
+
+    @Test
+    void userinfoForPortalAdminIncludesFio() throws Exception {
+        MvcResult authorize = mockMvc.perform(get("/authorize")
+                        .param("client_id", "webapp")
+                        .param("redirect_uri", REDIRECT)
+                        .param("state", "fio")
+                        .with(user("admin@mail.ru").roles("ADMIN", "USER")))
+                .andExpect(status().is3xxRedirection())
+                .andReturn();
+        String code = authorize.getResponse().getHeader("Location")
+                .replaceAll(".*[?&]code=([^&]+).*", "$1");
+
+        MvcResult tokenResult = mockMvc.perform(post("/token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "grant_type": "authorization_code",
+                                  "code": "%s",
+                                  "client_id": "webapp",
+                                  "client_secret": "webapp-secret-local",
+                                  "redirect_uri": "%s"
+                                }
+                                """.formatted(code, REDIRECT)))
+                .andExpect(status().isOk())
+                .andReturn();
+        String accessToken = objectMapper.readTree(
+                        tokenResult.getResponse().getContentAsString(StandardCharsets.UTF_8))
+                .get("access_token").asText();
+
+        JsonNode info = objectMapper.readTree(mockMvc.perform(get("/userinfo")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8));
+        assertThat(info.get("email").asText()).isEqualTo("admin@mail.ru");
+        assertThat(info.get("lastName").asText()).isEqualTo("Иванов");
+        assertThat(info.get("firstName").asText()).isEqualTo("Иван");
+        assertThat(info.get("middleName").asText()).isEqualTo("Иванович");
     }
 
     @Test
@@ -111,5 +160,25 @@ class SsoFlowIntegrationTest {
     @Test
     void loginPageIsPublic() throws Exception {
         mockMvc.perform(get("/login")).andExpect(status().isOk());
+    }
+
+    @Test
+    void logoutWithRegisteredPostLogoutRedirectGoesBackToPortal() throws Exception {
+        mockMvc.perform(get("/logout")
+                        .param("client_id", "webapp")
+                        .param("post_logout_redirect_uri", "http://127.0.0.1:8088/login?logout")
+                        .with(user("admin@mail.ru").roles("ADMIN", "USER")))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(header().string("Location", "http://127.0.0.1:8088/login?logout"));
+    }
+
+    @Test
+    void logoutRejectsUnregisteredPostLogoutRedirect() throws Exception {
+        mockMvc.perform(get("/logout")
+                        .param("client_id", "webapp")
+                        .param("post_logout_redirect_uri", "http://evil.example/phish")
+                        .with(user("admin@mail.ru").roles("ADMIN", "USER")))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(header().string("Location", org.hamcrest.Matchers.endsWith("/login?logout")));
     }
 }

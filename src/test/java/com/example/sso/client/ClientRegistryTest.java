@@ -24,6 +24,7 @@ class ClientRegistryTest {
         webapp.setClientId("webapp");
         webapp.setClientSecret("webapp-secret");
         webapp.setRedirectUris(List.of("http://127.0.0.1:8080/login/sso/callback"));
+        webapp.setPostLogoutRedirectUris(List.of("http://127.0.0.1:8080/login?logout"));
 
         Map<String, SsoProperties.Client> clients = new LinkedHashMap<>();
         clients.put("webapp", webapp);
@@ -59,6 +60,17 @@ class ClientRegistryTest {
         assertThatThrownBy(() ->
                 registry.validateRedirectUri(client, "http://evil.example/callback"))
                 .isInstanceOf(SsoBadRequestException.class);
+    }
+
+    @Test
+    @DisplayName("post_logout_redirect_uri только из белого списка клиента")
+    void postLogoutRedirectMustBeRegistered() {
+        assertThat(registry.isAllowedPostLogoutRedirect(
+                "webapp", "http://127.0.0.1:8080/login?logout")).isTrue();
+        assertThat(registry.isAllowedPostLogoutRedirect(
+                "webapp", "http://evil.example/login?logout")).isFalse();
+        assertThat(registry.isAllowedPostLogoutRedirect(
+                "unknown", "http://127.0.0.1:8080/login?logout")).isFalse();
     }
 
     @Test

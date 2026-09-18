@@ -1,5 +1,6 @@
 package com.example.sso.config;
 
+import com.example.sso.client.ClientRegistry;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -10,6 +11,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.OrRequestMatcher;
 
 /**
  * Дверь SSO: форма логина, сессия cookie, публичные token/userinfo по Bearer.
@@ -27,7 +30,9 @@ public class SecurityConfig {
                     + "script-src 'self'; form-action 'self'; frame-ancestors 'none'";
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http,
+            ClientRegistry clientRegistry) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/css/**", "/login", "/error").permitAll()
@@ -43,8 +48,10 @@ public class SecurityConfig {
                         .passwordParameter("password")
                         .permitAll())
                 .logout(logout -> logout
-                        .logoutUrl("/logout")
-                        .logoutSuccessUrl("/login?logout")
+                        .logoutRequestMatcher(new OrRequestMatcher(
+                                new AntPathRequestMatcher("/logout", "GET"),
+                                new AntPathRequestMatcher("/logout", "POST")))
+                        .logoutSuccessHandler(new RpInitiatedLogoutSuccessHandler(clientRegistry))
                         .invalidateHttpSession(true)
                         .deleteCookies("SSOSESSIONID")
                         .permitAll())
